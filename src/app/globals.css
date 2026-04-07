@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0c0e14;
+  --card: #12151e;
+  --border: rgba(255,255,255,0.06);
+  --text: #e8eaf0;
+  --muted: #6b7185;
+  --accent: #6366f1;
+  --accent-text: #a5b4fc;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  margin: 0;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+input::placeholder { color: var(--muted); }
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+select { appearance: none; }
+textarea { font-family: inherit; }
