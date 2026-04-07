@@ -609,7 +609,7 @@ function ClientPanel({
 
         {/* Notes */}
         <div style={{ padding: '12px 20px 24px' }}>
-          <h3 style={{ fontSize: 11, fontWeight: 600, color: '#6b7185', textTransform: 'uppercase' as const, marginBottom: 6, margin: 0, marginBottom: 6 }}>Notas ({notes.length})</h3>
+          <h3 style={{ fontSize: 11, fontWeight: 600, color: '#6b7185', textTransform: 'uppercase' as const, margin: 0, marginBottom: 6 }}>Notas ({notes.length})</h3>
           {notes.map(n => {
             if (editNoteId === n.id) {
               return <EditNoteInline key={n.id} note={n} onSave={text => { onEditNote(n.id, text); setEditNoteId(null) }} onCancel={() => setEditNoteId(null)} />
