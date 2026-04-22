@@ -24,7 +24,11 @@ const SM: Record<string, { l: string; c: string; b: string }> = {
 function daysB(a: string, b: string) { return Math.floor((new Date(b).getTime() - new Date(a).getTime()) / 86400000) }
 function fmt(v: number | null | undefined, c: string) {
   if (v == null) return '—'
-  return (c === 'USD' ? '$' : '€') + v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const sym = c === 'USD' ? '$' : '€'
+  const parts = Math.abs(v).toFixed(2).split('.')
+  const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  const decPart = parts[1]
+  return (v < 0 ? '-' : '') + sym + intPart + ',' + decPart
 }
 
 function calcSt(revenue: number | null, totalPaid: number) {
