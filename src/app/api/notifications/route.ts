@@ -307,7 +307,7 @@ async function sendEmail(
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Irregular Tracker <notifications@resend.dev>',
+        from: 'Irregular Tracker <onboarding@resend.dev>',
         to: NOTIFICATION_EMAILS,
         subject: `⚡ ${clientCount} clientes com €${(totalOwed / 1000).toFixed(1)}k em atraso — Irregular`,
         html,
