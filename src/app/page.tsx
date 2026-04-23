@@ -324,7 +324,7 @@ export default function Tracker() {
             const li = [...cI].reverse().find(i => (i.revenue || 0) > 0)
             const lp = li ? payments.filter(p => p.invoice_id === li.id).reduce((s, p) => s + p.amount, 0) : 0
             const lb = li ? (li.bad_debt || 0) : 0
-            const ls = li ? calcSt(li.revenue, lp, lb) : 'pending'
+            const ls = c.totalOwed > 0.01 ? (c.totalPaid > 0 ? 'partial' : 'unpaid') : (c.totalBadDebt > 0 ? 'writeoff' : (c.totalRev > 0 ? 'paid' : 'pending'))
             return (
               <div key={c.id} onClick={() => setSelId(c.id)}
                 style={{ display: 'grid', gridTemplateColumns: '1fr 100px 75px 55px 55px', alignItems: 'center', padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)', background: selId === c.id ? 'rgba(99,102,241,0.08)' : 'transparent', transition: 'background .1s' }}
