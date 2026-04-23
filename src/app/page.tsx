@@ -51,10 +51,11 @@ interface Note { id: string; client_id: string; invoice_id: string | null; text:
 
 function Badge({ status }: { status: string }) { const s = SM[status] || SM.pending; return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 5, fontSize: 9, fontWeight: 600, color: s.c, background: s.b, textTransform: 'uppercase' }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: s.c }} />{s.l}</span> }
 
-function StagePill({ stage, onAdv }: { stage: string; onAdv?: (s: string) => void }) {
-  const s = STAGES.find(x => x.id === stage) || STAGES[0]; const idx = STAGES.findIndex(x => x.id === stage); const next = idx < STAGES.length - 1 ? STAGES[idx + 1] : null
-  return <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 10, fontWeight: 600, color: s.color, padding: '2px 8px', borderRadius: 5, background: s.color + '18' }}>{s.icon} {s.label}</span>{next && onAdv && <button onClick={e => { e.stopPropagation(); onAdv(next.id) }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, color: '#6b7185', cursor: 'pointer', fontSize: 10, padding: '1px 5px' }}>→</button>}</div>
+function StagePill({ stage, onAdv, onBack }: { stage: string; onAdv?: (s: string) => void; onBack?: (s: string) => void }) {
+  const s = STAGES.find(x => x.id === stage) || STAGES[0]; const idx = STAGES.findIndex(x => x.id === stage); const next = idx < STAGES.length - 1 ? STAGES[idx + 1] : null; const prev = idx > 0 ? STAGES[idx - 1] : null
+  return <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{prev && onBack && <button onClick={e => { e.stopPropagation(); onBack(prev.id) }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, color: '#6b7185', cursor: 'pointer', fontSize: 10, padding: '1px 5px' }}>←</button>}<span style={{ fontSize: 10, fontWeight: 600, color: s.color, padding: '2px 8px', borderRadius: 5, background: s.color + '18' }}>{s.icon} {s.label}</span>{next && onAdv && <button onClick={e => { e.stopPropagation(); onAdv(next.id) }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, color: '#6b7185', cursor: 'pointer', fontSize: 10, padding: '1px 5px' }}>→</button>}</div>
 }
+
 
 export default function Tracker() {
   const [clients, setClients] = useState<Client[]>([]); const [invoices, setInvoices] = useState<Invoice[]>([]); const [payments, setPayments] = useState<Payment[]>([]); const [notes, setNotes] = useState<Note[]>([]); const [loading, setLoading] = useState(true); const [search, setSearch] = useState(''); const [filter, setFilter] = useState('all'); const [showAging, setShowAging] = useState(false); const [showAddClient, setShowAddClient] = useState(false); const [selId, setSelId] = useState<string | null>(null)
@@ -85,6 +86,7 @@ export default function Tracker() {
   const addInvoice = async (cid: string, m: string, mi: number, r: number | null, o: string, d: string | null) => { await supabase.from('invoices').insert({ client_id: cid, month: m, month_index: mi, revenue: r, obs: o, date_set: d, stage: 'confirm', on_hold: 0, bad_debt: 0, currency: clients.find(c => c.id === cid)?.currency || 'EUR' }); loadData() }
   const addClient = async (data: any) => { const res = await supabase.from('clients').insert(data).select(); loadData(); if (res.data?.[0]) setSelId(res.data[0].id) }
   const updateClient = async (id: string, data: any) => { await supabase.from('clients').update(data).eq('id', id); loadData() }
+  const deleteInvoice = async (id: string) => { await supabase.from('invoices').delete().eq('id', id); loadData() }
 
   const selectedClient = clients.find(c => c.id === selId)
   const selectedInvoices = invoices2026.filter(i => i.client_id === selId).sort((a, b) => a.month_index - b.month_index)
@@ -162,12 +164,13 @@ export default function Tracker() {
         </div>
       </div>
 
-      {selectedClient && <ClientPanel client={selectedClient} invoices={selectedInvoices} payments={payments} notes={notes.filter(n => n.client_id === selectedClient.id)} onClose={() => setSelId(null)} onUpdateInvoice={updateInvoice} onAddPayment={addPayment} onEditPayment={editPayment} onDeletePayment={deletePayment} onAddNote={addNote} onEditNote={editNote} onDeleteNote={deleteNote} onAddInvoice={addInvoice} onUpdateClient={updateClient} />}
+      {selectedClient && <ClientPanel client={selectedClient} invoices={selectedInvoices} payments={payments} notes={notes.filter(n => n.client_id === selectedClient.id)} onClose={() => setSelId(null)} onUpdateInvoice={updateInvoice} onAddPayment={addPayment} onEditPayment={editPayment} onDeletePayment={deletePayment} onAddNote={addNote} onEditNote={editNote} onDeleteNote={deleteNote} onAddInvoice={addInvoice} onUpdateClient={updateClient} onDeleteInvoice={deleteInvoice} />}
     </div>
   )
 }
 
-function ClientPanel({ client, invoices, payments, notes, onClose, onUpdateInvoice, onAddPayment, onEditPayment, onDeletePayment, onAddNote, onEditNote, onDeleteNote, onAddInvoice, onUpdateClient }: { client: Client; invoices: Invoice[]; payments: Payment[]; notes: Note[]; onClose: () => void; onUpdateInvoice: (id: string, d: any) => void; onAddPayment: (id: string, d: any) => void; onEditPayment: (id: string, d: any) => void; onDeletePayment: (id: string) => void; onAddNote: (id: string, t: string) => void; onEditNote: (id: string, t: string) => void; onDeleteNote: (id: string) => void; onAddInvoice: (c: string, m: string, mi: number, r: number | null, o: string, d: string | null) => void; onUpdateClient: (id: string, d: Partial<Client>) => void }) {
+function ClientPanel({ client, invoices, payments, notes, onClose, onUpdateInvoice, onAddPayment, onEditPayment, onDeletePayment, onAddNote, onEditNote, onDeleteNote, onAddInvoice, onUpdateClient, onDeleteInvoice }: {
+ client: Client; invoices: Invoice[]; payments: Payment[]; notes: Note[]; onClose: () => void; onUpdateInvoice: (id: string, d: any) => void; onAddPayment: (id: string, d: any) => void; onEditPayment: (id: string, d: any) => void; onDeletePayment: (id: string) => void; onAddNote: (id: string, t: string) => void; onEditNote: (id: string, t: string) => void; onDeleteNote: (id: string) => void; onAddInvoice: (c: string, m: string, mi: number, r: number | null, o: string, d: string | null) => void; onUpdateClient: (id: string, d: Partial<Client>) => void; onDeleteInvoice: (id: string) => void }) {
   const [editId, setEditId] = useState<string | null>(null); const [payId, setPayId] = useState<string | null>(null); const [editPayId, setEditPayId] = useState<string | null>(null); const [editNoteId, setEditNoteId] = useState<string | null>(null); const [confirmDel, setConfirmDel] = useState<string | null>(null); const [showEditClient, setShowEditClient] = useState(false); const [newNote, setNewNote] = useState(''); const [showAddMonth, setShowAddMonth] = useState(false)
   const totals = useMemo(() => { let r = 0, p = 0, h = 0, bd = 0; invoices.forEach(inv => { r += inv.revenue || 0; h += inv.on_hold || 0; bd += inv.bad_debt || 0; p += payments.filter(py => py.invoice_id === inv.id).reduce((s, py) => s + py.amount, 0) }); return { r, p, o: r - p - bd, h, bd } }, [invoices, payments])
   const clear = () => { setEditId(null); setPayId(null); setEditPayId(null); setShowAddMonth(false) }
@@ -193,14 +196,15 @@ function ClientPanel({ client, invoices, payments, notes, onClose, onUpdateInvoi
           return <div key={inv.id} style={{ marginBottom: 6, borderRadius: 9, background: '#12151e', border: '1px solid rgba(255,255,255,0.06)' }}><div style={{ padding: '11px 13px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{inv.month}</span>
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{inv.month}</span><button onClick={() => setConfirmDel('inv-' + inv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 9, opacity: 0.3, padding: 0 }}>🗑️</button>
                 {!resolved && days != null && days > 0 && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, color: days > 20 ? '#ef4444' : days > 7 ? '#f59e0b' : '#6b7185', background: (days > 20 ? '#ef4444' : days > 7 ? '#f59e0b' : '#6b7280') + '15' }}>⏱ {days}d</span>}
                 {resDays != null && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, color: '#22c55e', background: 'rgba(34,197,94,0.1)' }}>✓ {resDays}d</span>}
                 {bd > 0 && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, color: '#9333ea', background: 'rgba(147,51,234,0.1)' }}>💀 {fmt(bd, client.currency)}</span>}
                 {inv.on_hold > 0 && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, color: '#f97316', background: 'rgba(249,115,22,0.1)' }}>🔒 {fmt(inv.on_hold, client.currency)}</span>}
               </div>
-              <StagePill stage={inv.stage} onAdv={!resolved ? ns => onUpdateInvoice(inv.id, { stage: ns }) : undefined} />
+              <StagePill stage={inv.stage} onAdv={!resolv<StagePill stage={inv.stage} onAdv={ns => onUpdateInvoice(inv.id, { stage: ns })} onBack={ns => onUpdateInvoice(inv.id, { stage: ns })} />
             </div>
+            </div>{confirmDel === 'inv-' + inv.id && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, marginBottom: 4 }}><span style={{ fontSize: 10, color: '#ef4444' }}>Apagar este mês e pagamentos?</span><button onClick={() => { onDeleteInvoice(inv.id); setConfirmDel(null) }} style={{ padding: '3px 8px', borderRadius: 4, border: 'none', background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 600, cursor: 'pointer' }}>Sim</button><button onClick={() => setConfirmDel(null)} style={{ padding: '3px 8px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#6b7185', fontSize: 9, cursor: 'pointer' }}>Não</button></div>
             <div style={{ display: 'grid', gridTemplateColumns: bd > 0 ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr', gap: 5, marginBottom: 6 }}>
               <div><div style={{ fontSize: 8, color: '#6b7185', textTransform: 'uppercase' as const, marginBottom: 1 }}>Faturado</div><div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: inv.revenue != null ? '#e8eaf0' : '#6b7185' }}>{inv.revenue != null ? fmt(inv.revenue, client.currency) : '—'}</span><button onClick={() => { clear(); setEditId(editId === inv.id ? null : inv.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, padding: 0, opacity: 0.5 }}>✏️</button></div></div>
               <div><div style={{ fontSize: 8, color: '#6b7185', textTransform: 'uppercase' as const, marginBottom: 1 }}>Recebido</div><span style={{ fontSize: 13, fontWeight: 600, fontFamily: "'DM Mono', monospace", color: pd > 0 ? '#22c55e' : '#6b7185' }}>{fmt(pd, client.currency)}</span></div>
