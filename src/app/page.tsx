@@ -312,7 +312,7 @@ const MONTH_INDEX_MAP: Record<string, number> = {}
 MONTH_ORDER.forEach(m => { const [mon, yr] = m.split(' '); const mn = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'].indexOf(mon) + 1; MONTH_INDEX_MAP[m] = (2000 + parseInt(yr)) * 100 + mn })
 
 function AddMonthForm({ existingMonths, onAdd, onCancel }: { existingMonths: string[]; onAdd: (m: string, mi: number, r: number | null, o: string, d: string | null) => void; onCancel: () => void }) {
-  const used = MONTH_ORDER
+  const avail = MONTH_ORDER
   const [sel, setSel] = useState(avail.length ? avail[avail.length - 1] : ''); const [val, setVal] = useState(''); const [ds, setDs] = useState(TODAY)
   if (!avail.length) return <div style={{ padding: 12, fontSize: 11, color: '#6b7185' }}>Todos os meses de 2026 adicionados.</div>
   return <div style={{ padding: 14, borderRadius: 10, marginBottom: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)' }}>
